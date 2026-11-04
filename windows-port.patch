@@ -1,0 +1,712 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 791217d..6777faf 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,7 +1,12 @@
++# Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ cmake_minimum_required(VERSION 3.5)
+ 
+ project(stegseek VERSION 0.6)
+ 
++set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD_REQUIRED ON)
++include(CTest)
++
+ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   # Update if necessary
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long")
+@@ -13,7 +18,7 @@ endif()
+ add_subdirectory("src")
+ 
+ # Testing only available if this is the main app
+-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
++if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+   enable_testing()
+   add_subdirectory(tests/steghide)
+ endif()
+diff --git a/src/Arguments.cc b/src/Arguments.cc
+index a03876d..aef9114 100644
+--- a/src/Arguments.cc
++++ b/src/Arguments.cc
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * steghide 0.5.1 - a steganography program
+  * Copyright (C) 1999-2003 Stefan Hetzl <shetzl@chello.at>
+@@ -27,6 +28,10 @@
+ #include <string>
+ #include <thread>
+ #include <unistd.h>
++#include <algorithm>
++#ifdef _WIN32
++#include <windows.h>
++#endif
+ 
+ #include "MCryptPP.h"
+ #include "Terminal.h"
+@@ -771,8 +776,12 @@ void Arguments::setDefaults(void) {
+     ExtFn.setValue("", false);
+     Passphrase.setValue("", false);
+     StgFn.setValue("", false);
++#ifdef _WIN32
++    WordlistFn.setValue("rockyou.txt", false);
++#else
+     WordlistFn.setValue("/usr/share/wordlists/rockyou.txt", false);
+-    Threads.setValue(std::thread::hardware_concurrency(), false);
++#endif
++    Threads.setValue(std::max(1u, std::thread::hardware_concurrency()), false);
+     Force.setValue(Default_Force, false);
+     SkipDefaultGuesses.setValue(Default_SkipDefaultGuesses, false);
+     Verbosity.setValue(Default_Verbosity, false);
+@@ -780,7 +789,15 @@ void Arguments::setDefaults(void) {
+     Goal.setValue(Default_Goal, false);
+     Accessible.setValue(Default_Accessible, false);
+     ContinueAfterFirstResult.setValue(Default_ContinueAfterFirstResult, false);
++#ifdef _WIN32
++    DWORD consoleMode;
++    HANDLE console = GetStdHandle(STD_ERROR_HANDLE);
++    bool color = GetConsoleMode(console, &consoleMode) &&
++                 SetConsoleMode(console, consoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
++    Color.setValue(color, false);
++#else
+     Color.setValue(isatty(fileno(stderr)), false);
++#endif
+     Check.setValue(Default_Check, false);
+     DebugCommand.setValue(Default_DebugCommand, false);
+     DebugLevel.setValue(Default_DebugLevel, false);
+diff --git a/src/BinaryIO.cc b/src/BinaryIO.cc
+index df10b87..1a3d9b4 100644
+--- a/src/BinaryIO.cc
++++ b/src/BinaryIO.cc
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * steghide 0.5.1 - a steganography program
+  * Copyright (C) 1999-2003 Stefan Hetzl <shetzl@chello.at>
+@@ -19,6 +20,10 @@
+  */
+ 
+ #include <cstdio>
++#ifdef _WIN32
++#include <fcntl.h>
++#include <io.h>
++#endif
+ 
+ #include "BinaryIO.h"
+ #include "common.h"
+@@ -111,6 +116,12 @@ void BinaryIO::open(const std::string &fn, MODE m) {
+ 
+         setStream(s);
+     }
++#ifdef _WIN32
++    // The CRT otherwise translates CR/LF and treats Ctrl-Z as EOF on pipes.
++    if (_setmode(_fileno(getStream()), _O_BINARY) == -1) {
++        throw SteghideError("could not set binary file mode.");
++    }
++#endif
+     setName(fn);
+     setMode(m);
+     set_open(true);
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index f8b389a..7265d5a 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -1,7 +1,11 @@
+-add_definitions(-DHAVE_DEV_URANDOM)
+-add_definitions(-DHAVE_DEV_RANDOM)
+-add_definitions(-DHAVE_TERMIOS_H)
+-add_definitions(-DSTEGSEEK_VERSION="0.6")
++# Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
++if(WIN32)
++  add_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
++  add_definitions(-DSTEGSEEK_VERSION="0.6-win1")
++else()
++  add_definitions(-DHAVE_DEV_URANDOM -DHAVE_DEV_RANDOM -DHAVE_TERMIOS_H)
++  add_definitions(-DSTEGSEEK_VERSION="0.6")
++endif()
+ add_definitions(-DSTEGHIDE_VERSION="0.5.1")
+ 
+ set (sources
+@@ -68,7 +72,11 @@ file(GLOB headers
+ 
+ add_library(stegseek_lib ${sources} ${headers})
+ find_path(MCRYPT_INCLUDE_PATH mcrypt.h)
+-target_include_directories(stegseek_lib PUBLIC ${MCRYPT_INCLUDE_PATH})
++find_path(MHASH_INCLUDE_PATH mhash.h REQUIRED)
++find_package(JPEG REQUIRED)
++find_package(ZLIB REQUIRED)
++find_package(Threads REQUIRED)
++target_include_directories(stegseek_lib PUBLIC ${MCRYPT_INCLUDE_PATH} ${MHASH_INCLUDE_PATH})
+ 
+ set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
+@@ -80,4 +88,13 @@ install(TARGETS stegseek EXPORT stegseek DESTINATION bin)
+ find_library(MCRYPT_LIBRARY mcrypt)
+ find_library(MHASH_LIBRARY mhash)
+ find_library(JPEG_LIBRARY jpeg)
+-target_link_libraries(stegseek PRIVATE stegseek_lib PUBLIC -lpthread -lz ${MCRYPT_LIBRARY} ${MHASH_LIBRARY} ${JPEG_LIBRARY})
++target_link_libraries(stegseek_lib PUBLIC Threads::Threads ZLIB::ZLIB ${MCRYPT_LIBRARY} ${MHASH_LIBRARY} JPEG::JPEG)
++target_link_libraries(stegseek PRIVATE stegseek_lib)
++if(WIN32)
++  enable_language(RC)
++  target_sources(stegseek PRIVATE windows.rc)
++  target_link_libraries(stegseek_lib PUBLIC bcrypt)
++  if(MINGW)
++    target_link_options(stegseek PRIVATE -static -static-libgcc -static-libstdc++)
++  endif()
++endif()
+diff --git a/src/Cracker.cc b/src/Cracker.cc
+index 88a2b09..5fe4137 100644
+--- a/src/Cracker.cc
++++ b/src/Cracker.cc
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * Stegseek 0.6 - a steghide cracker
+  * Copyright (C) 2021 Rick de Jager
+@@ -82,16 +83,16 @@ Cracker::Cracker() {
+     success = false;
+ }
+ 
+-void Cracker::metrics(unsigned long maxValue) {
++void Cracker::metrics(std::uint64_t maxValue) {
+     // Make sure "end" is at least 1 (in case of empty wordlist)
+-    maxValue = std::max(maxValue, 1UL);
++    maxValue = std::max<std::uint64_t>(maxValue, 1);
+     // Keep track of the previous percentage we printed
+     // s.t. we can filter output in accessibility mode
+     float prevPercentage = -10.0f;
+ 
+     while (!stopped) {
+         // Copy the (atomic) progress to a temp value
+-        unsigned long cur = progress;
++        std::uint64_t cur = progress;
+         // Only show the progress bar if we've made considerable progress.
+         // Set at half a million seeds / 5 MB
+         if (cur > 500000) {
+diff --git a/src/Cracker.h b/src/Cracker.h
+index 16a23e9..fde1358 100644
+--- a/src/Cracker.h
++++ b/src/Cracker.h
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  *
+  * Stegseek 0.6 - a steghide cracker
+@@ -27,6 +28,7 @@
+ #include <atomic>
+ #include <chrono>
+ #include <condition_variable>
++#include <cstdint>
+ #include <exception>
+ #include <fstream>
+ #include <iostream>
+@@ -46,8 +48,8 @@ class Cracker {
+     void crack();
+ 
+   protected:
+-    void metrics(unsigned long maxValue);
+-    virtual void metricLine(unsigned long cur, float percentage){};
++    void metrics(std::uint64_t maxValue);
++    virtual void metricLine(std::uint64_t cur, float percentage){};
+     void finish();
+     void extract(EmbData *);
+     bool verifyMagic(std::string);
+@@ -55,9 +57,9 @@ class Cracker {
+     bool verifyMagic(UWORD32);
+ 
+     // Variables
+-    bool success;
+-    bool stopped;
+-    std::atomic<unsigned long> progress;
++    std::atomic<bool> success;
++    std::atomic<bool> stopped;
++    std::atomic<std::uint64_t> progress;
+     std::atomic<unsigned int> saveFileIndex;
+     std::atomic<unsigned int> resultNum;
+     std::mutex handleResultMutex;
+diff --git a/src/PasswordCracker.cc b/src/PasswordCracker.cc
+index e91ef1a..c1e1b48 100644
+--- a/src/PasswordCracker.cc
++++ b/src/PasswordCracker.cc
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * Stegseek 0.6 - a steghide cracker
+  * Copyright (C) 2021 Rick de Jager
+@@ -21,6 +22,7 @@
+  */
+ 
+ #include "PasswordCracker.h"
++#include <memory>
+ 
+ #include "CvrStgFile.h"
+ #include "EmbData.h"
+@@ -39,8 +41,13 @@ void PasswordCracker::crack() {
+     unsigned int threads = Args.Threads.getValue();
+ 
+     // First stat the word list to get the file length
++#ifdef _WIN32
++    struct _stat64 wordlistStats;
++    if (_stat64(Args.WordlistFn.getValue().c_str(), &wordlistStats) != 0) {
++#else
+     struct stat wordlistStats;
+     if (stat(Args.WordlistFn.getValue().c_str(), &wordlistStats) != 0) {
++#endif
+         throw SteghideError("could not open the wordlist \"%s\".",
+                             Args.WordlistFn.getValue().c_str());
+     }
+@@ -58,14 +65,20 @@ void PasswordCracker::crack() {
+     // Add n worker threads
+     // A part must have at least len 1, otherwise no words will be read when
+     // threads > size
+-    unsigned long part = ((unsigned long)wordlistStats.st_size) / threads;
++    std::uint64_t part = static_cast<std::uint64_t>(wordlistStats.st_size) / threads;
+     if (part <= 0) {
+         part = 1;
+     }
+ 
+     for (unsigned int i = 0; i < threads; i++) {
+         ThreadPool.push_back(std::thread([this, i, part, metricsEnabled] {
+-            consume(i * part, (i + 1) * part, metricsEnabled);
++            try {
++                consume(i * part, (i + 1) * part, metricsEnabled);
++            } catch (...) {
++                const std::lock_guard<std::mutex> lock(handleResultMutex);
++                exception = std::current_exception();
++                stopped = true;
++            }
+         }));
+     }
+ 
+@@ -82,25 +95,37 @@ void PasswordCracker::crack() {
+         ThreadPool.pop_back();
+     }
+ 
+-    if (!success) {
+-        throw SteghideError("Could not find a valid passphrase.");
+-    }
+     if (exception) {
+         std::rethrow_exception(exception);
+     }
++    if (!success) {
++        throw SteghideError("Could not find a valid passphrase.");
++    }
+ }
+ 
+ // Take jobs and crack 'em
+-void PasswordCracker::consume(unsigned long i, unsigned long stop, bool metricsEnabled) {
++void PasswordCracker::consume(std::uint64_t i, std::uint64_t stop, bool metricsEnabled) {
+     // We want one thread to try a few "fun" ctf passwords first
+     if (i == 0 && !Args.SkipDefaultGuesses.getValue()) {
+         sillyCtfGuesses();
+     }
+     // Next, load the wordlist file
+-    FILE *pWordList;
+-    pWordList = fopen(Args.WordlistFn.getValue().c_str(), "r");
++    std::unique_ptr<FILE, decltype(&fclose)> wordFile(
++        fopen(Args.WordlistFn.getValue().c_str(), "rb"), &fclose);
++    FILE *pWordList = wordFile.get();
++    if (!pWordList) {
++        throw SteghideError("could not open the wordlist \"%s\".",
++                            Args.WordlistFn.getValue().c_str());
++    }
+     // Skip to our section
+-    fseek(pWordList, i, SEEK_SET);
++#ifdef _WIN32
++    const int seekResult = _fseeki64(pWordList, i, SEEK_SET);
++#else
++    const int seekResult = fseeko(pWordList, i, SEEK_SET);
++#endif
++    if (seekResult != 0) {
++        throw SteghideError("could not seek in the wordlist.");
++    }
+ 
+     unsigned int batchProgess = 0;
+ 
+@@ -144,16 +169,22 @@ void PasswordCracker::consume(unsigned long i, unsigned long stop, bool metricsE
+ 
+         // Get out current position in the wordlist, make sure it is non-negative, so
+         // we are safe to cast it to unsigned in the next compare.
+-        long pos = ftell(pWordList);
++#ifdef _WIN32
++        const auto pos = _ftelli64(pWordList);
++#else
++        const auto pos = ftello(pWordList);
++#endif
+         myassert(pos >= 0);
+ 
+         // If we've overshot the end of our section (by one word), we can stop
+-        if ((unsigned long)ftell(pWordList) > stop) {
++        if (static_cast<std::uint64_t>(pos) > stop) {
+             break;
+         }
+     }
+ 
+-    fclose(pWordList);
++    if (ferror(pWordList)) {
++        throw SteghideError("could not read the wordlist.");
++    }
+ }
+ 
+ bool PasswordCracker::tryPassphrase(const char *Passphrase) {
+@@ -245,7 +276,7 @@ void PasswordCracker::sillyCtfGuesses() {
+     }
+ }
+ 
+-void PasswordCracker::metricLine(unsigned long cur, float percentage) {
++void PasswordCracker::metricLine(std::uint64_t cur, float percentage) {
+     // In accessibility mode, print a flat percentage
+     if (Args.Accessible.getValue()) {
+         Message::print("%.0f%%\n", percentage);
+diff --git a/src/PasswordCracker.h b/src/PasswordCracker.h
+index d6f48c1..b44ad05 100644
+--- a/src/PasswordCracker.h
++++ b/src/PasswordCracker.h
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  *
+  * Stegseek 0.6 - a steghide cracker
+@@ -39,12 +40,12 @@ class PasswordCracker : Cracker {
+     void crack();
+ 
+   protected:
+-    void metricLine(unsigned long, float) override;
++    void metricLine(std::uint64_t, float) override;
+ 
+   private:
+     bool tryPassphrase(const char *);
+     void extract(std::string);
+-    void consume(unsigned long, unsigned long, bool);
++    void consume(std::uint64_t, std::uint64_t, bool);
+     void handleResult(std::string);
+     void sillyCtfGuesses();
+     std::ifstream wordlist;
+diff --git a/src/RandomSource.cc b/src/RandomSource.cc
+index 1085325..9ca7462 100644
+--- a/src/RandomSource.cc
++++ b/src/RandomSource.cc
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * steghide 0.5.1 - a steganography program
+  * Copyright (C) 1999-2003 Stefan Hetzl <shetzl@chello.at>
+@@ -20,6 +21,10 @@
+ 
+ #include <cstdlib>
+ #include <ctime>
++#ifdef _WIN32
++#include <windows.h>
++#include <bcrypt.h>
++#endif
+ 
+ #include "BitString.h"
+ #include "RandomSource.h"
+@@ -57,11 +62,22 @@ RandomSource::~RandomSource() noexcept(false) {
+ BYTE RandomSource::getByte() {
+     BYTE retval = 0;
+ #ifndef NORANDOM
++#ifdef _WIN32
++    if (RandomBufferPos == sizeof(RandomBuffer)) {
++        if (BCryptGenRandom(NULL, RandomBuffer, sizeof(RandomBuffer),
++                            BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0) {
++            throw SteghideError("Windows random number generator failed.");
++        }
++        RandomBufferPos = 0;
++    }
++    retval = RandomBuffer[RandomBufferPos++];
++#else
+     if (RandomInput != NULL) {
+         retval = getc(RandomInput);
+     } else {
+         retval = (BYTE)(256.0 * (rand() / (RAND_MAX + 1.0)));
+     }
++#endif
+ #endif
+     return retval;
+ }
+diff --git a/src/RandomSource.h b/src/RandomSource.h
+index ebb4b1c..2249682 100644
+--- a/src/RandomSource.h
++++ b/src/RandomSource.h
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * steghide 0.5.1 - a steganography program
+  * Copyright (C) 1999-2003 Stefan Hetzl <shetzl@chello.at>
+@@ -69,6 +70,10 @@ class RandomSource {
+     unsigned long getValue(unsigned long n);
+ 
+   private:
++#ifdef _WIN32
++    BYTE RandomBuffer[4096];
++    unsigned int RandomBufferPos = sizeof(RandomBuffer);
++#endif
+     unsigned int RandomBytePos;
+     BYTE RandomByte;
+     /**
+diff --git a/src/SeedCracker.cc b/src/SeedCracker.cc
+index 36f3c1a..b5f5124 100644
+--- a/src/SeedCracker.cc
++++ b/src/SeedCracker.cc
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * Stegseek 0.6 - a steghide cracker
+  * Copyright (C) 2021 Rick de Jager
+@@ -40,14 +41,20 @@ void SeedCracker::crack() {
+ 
+     // Add a thread to keep track of metrics
+     if (metricsEnabled) {
+-        ThreadPool.push_back(std::thread([this] { metrics(UWORD32_MAX); }));
++        ThreadPool.push_back(std::thread([this] { metrics(std::uint64_t{1} << 32); }));
+     }
+ 
+     // Add n worker threads
+-    unsigned int part = UWORD32_MAX / threads;
++    const std::uint64_t total = std::uint64_t{1} << 32;
+     for (unsigned int i = 0; i < threads; i++) {
+-        ThreadPool.push_back(std::thread([this, i, part, metricsEnabled] {
+-            consume(i * part, (i + 1) * part, metricsEnabled);
++        ThreadPool.push_back(std::thread([this, i, total, threads, metricsEnabled] {
++            try {
++                consume(total * i / threads, total * (i + 1) / threads, metricsEnabled);
++            } catch (...) {
++                const std::lock_guard<std::mutex> lock(handleResultMutex);
++                exception = std::current_exception();
++                stopped = true;
++            }
+         }));
+     }
+ 
+@@ -65,16 +72,16 @@ void SeedCracker::crack() {
+     }
+ 
+     // If we didn't find a passphrase, throw an error.
+-    if (!success) {
+-        throw SteghideError("Could not find a valid seed.");
+-    }
+     if (exception) {
+         std::rethrow_exception(exception);
+     }
++    if (!success) {
++        throw SteghideError("Could not find a valid seed.");
++    }
+ }
+ 
+ // Take jobs and crack 'em
+-void SeedCracker::consume(unsigned int i, unsigned int stop, bool metricsEnabled) {
++void SeedCracker::consume(std::uint64_t i, std::uint64_t stop, bool metricsEnabled) {
+     unsigned int batchProgress = 0;
+     while (!stopped && i < stop) {
+         // Try extracting with this seed
+@@ -146,7 +153,7 @@ Result SeedCracker::trySeed(UWORD32 seed) {
+             // get Plain size
+             if (33 <= bitsSeen && bitsSeen < 65) {
+                 plainSize ^= currentBit << (bitsSeen - 33);
+-                if (plainSize * samplesPerVertex >
++                if (static_cast<std::uint64_t>(plainSize) * samplesPerVertex >
+                     numSamples - requestedValues * samplesPerVertex) {
+                     // This plain size wouldn't fit, so the seed must be wrong.
+                     return Result{};
+@@ -188,11 +195,12 @@ void SeedCracker::handleResult(Result result) {
+     }
+ }
+ 
+-void SeedCracker::metricLine(unsigned long cur, float percentage) {
++void SeedCracker::metricLine(std::uint64_t cur, float percentage) {
+     // In accessibility mode, print a flat percentage
+     if (Args.Accessible.getValue()) {
+         Message::print("%.0f%%\n", percentage);
+     } else {
+-        Message::print("Progress: %.2f%% (%lu seeds)           \r", percentage, cur);
++        Message::print("Progress: %.2f%% (%llu seeds)           \r", percentage,
++                       static_cast<unsigned long long>(cur));
+     }
+ }
+diff --git a/src/SeedCracker.h b/src/SeedCracker.h
+index cad8812..851beb6 100644
+--- a/src/SeedCracker.h
++++ b/src/SeedCracker.h
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  *
+  * Stegseek 0.6 - a steghide cracker
+@@ -44,11 +45,11 @@ class SeedCracker : Cracker {
+     void crack();
+ 
+   protected:
+-    void metricLine(unsigned long, float) override;
++    void metricLine(std::uint64_t, float) override;
+ 
+   private:
+     Result trySeed(UWORD32);
+-    void consume(unsigned int, unsigned int, bool);
++    void consume(std::uint64_t, std::uint64_t, bool);
+     void handleResult(Result);
+     const unsigned int batchSize = 5000;
+ };
+diff --git a/src/Terminal.cc b/src/Terminal.cc
+index 1668a7b..26ab96a 100644
+--- a/src/Terminal.cc
++++ b/src/Terminal.cc
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * steghide 0.5.1 - a steganography program
+  * Copyright (C) 1999-2003 Stefan Hetzl <shetzl@chello.at>
+@@ -19,6 +20,9 @@
+  */
+ 
+ #include <unistd.h>
++#ifdef _WIN32
++#include <windows.h>
++#endif
+ 
+ #include "Terminal.h"
+ #include "common.h"
+@@ -64,6 +68,28 @@ void Terminal::reset() {
+         throw SteghideError(_("could not set terminal attributes."));
+     }
+ }
++#elif defined(_WIN32)
++Terminal::Terminal() {
++    InputHandle = GetStdHandle(STD_INPUT_HANDLE);
++    IsConsole = GetConsoleMode(InputHandle, &InitMode) != 0;
++}
++void Terminal::EchoOff() {
++    if (IsConsole && !SetConsoleMode(InputHandle, InitMode & ~ENABLE_ECHO_INPUT)) {
++        throw SteghideError("could not disable terminal echo.");
++    }
++}
++void Terminal::SingleKeyOn() {
++    DWORD mode;
++    if (IsConsole && (!GetConsoleMode(InputHandle, &mode) ||
++                     !SetConsoleMode(InputHandle, mode & ~ENABLE_LINE_INPUT))) {
++        throw SteghideError("could not set terminal input mode.");
++    }
++}
++void Terminal::reset() {
++    if (IsConsole && !SetConsoleMode(InputHandle, InitMode)) {
++        throw SteghideError("could not restore terminal input mode.");
++    }
++}
+ #else
+ // TODO - do something that makes more sense - especially on Windows systems
+ Terminal::Terminal() {}
+diff --git a/src/Terminal.h b/src/Terminal.h
+index dc821a1..beb1ac7 100644
+--- a/src/Terminal.h
++++ b/src/Terminal.h
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * steghide 0.5.1 - a steganography program
+  * Copyright (C) 1999-2003 Stefan Hetzl <shetzl@chello.at>
+@@ -40,6 +41,11 @@ class Terminal {
+     void reset(void);
+ 
+   private:
++#ifdef _WIN32
++    void *InputHandle = nullptr;
++    unsigned long InitMode = 0;
++    bool IsConsole = false;
++#endif
+ #if HAVE_TERMIOS_H
+     /// contains the attributes of the terminal when this object was constructed
+     struct termios InitAttr;
+diff --git a/src/Utils.cc b/src/Utils.cc
+index d9dbeac..7091e5f 100644
+--- a/src/Utils.cc
++++ b/src/Utils.cc
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * steghide 0.5.1 - a steganography program
+  * Copyright (C) 1999-2003 Stefan Hetzl <shetzl@chello.at>
+@@ -22,7 +23,7 @@
+ 
+ #include "Utils.h"
+ 
+-std::string Utils::formatHRSize(unsigned long size) {
++std::string Utils::formatHRSize(std::uint64_t size) {
+     float s = (float)size;
+ 
+     std::string unit = "Byte(s)";
+diff --git a/src/Utils.h b/src/Utils.h
+index 342e09e..9d60ebd 100644
+--- a/src/Utils.h
++++ b/src/Utils.h
+@@ -1,3 +1,4 @@
++// Modified for the unofficial Windows port, 2026-11-04; see ../README.md and windows-port.patch.
+ /*
+  * steghide 0.5.1 - a steganography program
+  * Copyright (C) 1999-2003 Stefan Hetzl <shetzl@chello.at>
+@@ -22,13 +23,14 @@
+ #define SH_UTILS_H
+ 
+ #include <string>
++#include <cstdint>
+ 
+ class Utils {
+   public:
+     /**
+      * gets a number of bytes and returns a human-readable string like e.g. "3,5 KB"
+      **/
+-    static std::string formatHRSize(unsigned long size);
++    static std::string formatHRSize(std::uint64_t size);
+     static std::string stripDir(std::string);
+ };
+ 
+diff --git a/src/windows.manifest b/src/windows.manifest
+new file mode 100644
+index 0000000..b76468f
+--- /dev/null
++++ b/src/windows.manifest
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
++<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
++  <assemblyIdentity version="0.6.0.1" processorArchitecture="amd64" name="StegSeek.Windows" type="win32"/>
++  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
++    <security><requestedPrivileges><requestedExecutionLevel level="asInvoker" uiAccess="false"/></requestedPrivileges></security>
++  </trustInfo>
++  <application xmlns="urn:schemas-microsoft-com:asm.v3">
++    <windowsSettings>
++      <activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage>
++    </windowsSettings>
++  </application>
++</assembly>
+diff --git a/src/windows.rc b/src/windows.rc
+new file mode 100644
+index 0000000..a25d068
+--- /dev/null
++++ b/src/windows.rc
+@@ -0,0 +1,26 @@
++#include <winres.h>
++1 RT_MANIFEST "windows.manifest"
++1 VERSIONINFO
++FILEVERSION 0,6,0,1
++PRODUCTVERSION 0,6,0,1
++FILEFLAGSMASK 0x3fL
++FILEFLAGS 0x0L
++FILEOS VOS_NT_WINDOWS32
++FILETYPE VFT_APP
++BEGIN
++    BLOCK "StringFileInfo"
++    BEGIN
++        BLOCK "040904b0"
++        BEGIN
++            VALUE "FileDescription", "StegSeek - unofficial native Windows port"
++            VALUE "FileVersion", "0.6-win1"
++            VALUE "OriginalFilename", "stegseek.exe"
++            VALUE "ProductName", "StegSeek"
++            VALUE "ProductVersion", "0.6-win1"
++        END
++    END
++    BLOCK "VarFileInfo"
++    BEGIN
++        VALUE "Translation", 0x409, 1200
++    END
++END

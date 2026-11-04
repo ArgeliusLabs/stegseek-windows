@@ -1,0 +1,231 @@
+{
+  "producer": "Ubuntu steghide 0.5.1",
+  "payload_sha256": "1da92559e53167699f3bd821e5eb1690d8c523fef3a10bf5ecad791f28fa1f1d",
+  "cases": [
+    {
+      "file": "encrypted-mulaw_std.au",
+      "mode": "encrypted",
+      "sha256": "77a51f3e5bbb69c57be1a47dcbe84cfc5ae2542240f3c95214d916d66493762e"
+    },
+    {
+      "file": "seed-mulaw_std.au",
+      "mode": "seed",
+      "sha256": "5238943c6d39e471c436a5d95e202084c139bd02442ca0b655200c91bac66a10"
+    },
+    {
+      "file": "seed-encrypted-mulaw_std.au",
+      "mode": "seed-encrypted",
+      "sha256": "bc7603506fa52b4f15ea13780aac0fec796f5e06bd1e50c5f77b08aee7c0258a"
+    },
+    {
+      "file": "encrypted-os21x1_std.bmp",
+      "mode": "encrypted",
+      "sha256": "6b70cf83e23060699a386a828bb8ef14e142f2d80fb4c18dfb51e993592c90c7"
+    },
+    {
+      "file": "seed-os21x1_std.bmp",
+      "mode": "seed",
+      "sha256": "bc39af5d41bd057736368c5aa09a7593aae33d3bddb1406bdb676a602bcbbcf4"
+    },
+    {
+      "file": "seed-encrypted-os21x1_std.bmp",
+      "mode": "seed-encrypted",
+      "sha256": "08483171210d793f1bc7eec038cd86ce10a1e17379a2fedd30631eac99639722"
+    },
+    {
+      "file": "encrypted-os21x24_std.bmp",
+      "mode": "encrypted",
+      "sha256": "a917f492cdc12bed5e2212857a1f6ff74e77e10dfe5a6c7a7b3403dbee6b71a3"
+    },
+    {
+      "file": "seed-os21x24_std.bmp",
+      "mode": "seed",
+      "sha256": "81f7a745a2fb0d7ab4aa121be81622be25360f3bad16fc1f2fb7cfa0cdcbc81f"
+    },
+    {
+      "file": "seed-encrypted-os21x24_std.bmp",
+      "mode": "seed-encrypted",
+      "sha256": "ee76b94e6e87ba17390d3f7c5ed57ec236288a5f539d2b350e8250acf9244f14"
+    },
+    {
+      "file": "encrypted-os21x4_std.bmp",
+      "mode": "encrypted",
+      "sha256": "2b79d6b81109acb59726df9e3532d2e5728475e909a2462a84b254be4c3a43e8"
+    },
+    {
+      "file": "seed-os21x4_std.bmp",
+      "mode": "seed",
+      "sha256": "485bd0df42c122cdd25020bc196c2749e762e3e7d29761b8ad0796957c353276"
+    },
+    {
+      "file": "seed-encrypted-os21x4_std.bmp",
+      "mode": "seed-encrypted",
+      "sha256": "d14c2917a689acd49cee75276ff83c0e370f5a93bfc9851385c89a0ec6aa4e92"
+    },
+    {
+      "file": "encrypted-os21x8_std.bmp",
+      "mode": "encrypted",
+      "sha256": "ad0e235352dda5e9286c720eceab0ca8f1b7def1c49fbcaddde7f8c34b74ba67"
+    },
+    {
+      "file": "seed-os21x8_std.bmp",
+      "mode": "seed",
+      "sha256": "f4961e94fe6c16156a1f346f7291360e0e98ac894db82c285bb49d6192b352fd"
+    },
+    {
+      "file": "seed-encrypted-os21x8_std.bmp",
+      "mode": "seed-encrypted",
+      "sha256": "ebb0ef541299c29cd90d37f234f8b11beeb001ce30c88e13af6ba1eefeabacb6"
+    },
+    {
+      "file": "encrypted-pcm16_std.au",
+      "mode": "encrypted",
+      "sha256": "6d2e0e29ad51e68fc61e0dbf58180ce7da2e58a1b00cbf86c86f36db2d1d2733"
+    },
+    {
+      "file": "seed-pcm16_std.au",
+      "mode": "seed",
+      "sha256": "0e5aa6e9fed7d061206f386e4418503e6175d493d2ea86f4fc70828460b8413b"
+    },
+    {
+      "file": "seed-encrypted-pcm16_std.au",
+      "mode": "seed-encrypted",
+      "sha256": "a024aca8161ea90460a11605dd9182fc954ce32b5c551977a5f8ac255d16de67"
+    },
+    {
+      "file": "encrypted-pcm16_std.wav",
+      "mode": "encrypted",
+      "sha256": "7d2826139af3d744aa94c3a8e9dbca565f6ec1a3ca762322f970cd846add92df"
+    },
+    {
+      "file": "seed-pcm16_std.wav",
+      "mode": "seed",
+      "sha256": "8607c7cc21181334948d48c89a018650ff88b9feb0efe657b700ff20af983033"
+    },
+    {
+      "file": "seed-encrypted-pcm16_std.wav",
+      "mode": "seed-encrypted",
+      "sha256": "fb4c73570498a89ea7b3b89e97ccadd755e65a506afdd0a44ebc8a77fc091eeb"
+    },
+    {
+      "file": "encrypted-pcm8_std.au",
+      "mode": "encrypted",
+      "sha256": "36e7b5b4348b021ffa6c036cb3bc13ba706bcd480e35b40309c6499f46911282"
+    },
+    {
+      "file": "seed-pcm8_std.au",
+      "mode": "seed",
+      "sha256": "22db45ea7f6e25f19ac9cb94afe4470dd711976b2f787918c06c539b8e3b67fc"
+    },
+    {
+      "file": "seed-encrypted-pcm8_std.au",
+      "mode": "seed-encrypted",
+      "sha256": "df3b7e67763fb54cb2a789742c8da8050bc34b1590b2f7618c117a947dfe92c8"
+    },
+    {
+      "file": "encrypted-pcm8_std.wav",
+      "mode": "encrypted",
+      "sha256": "731bb113cd5ec390bee78adf3d7f32ba9b47464c4203855f84a2421c521f38be"
+    },
+    {
+      "file": "seed-pcm8_std.wav",
+      "mode": "seed",
+      "sha256": "b625b8776f43901580cee55c3d7823c1f4386720549f646f9606b2518411eeb4"
+    },
+    {
+      "file": "seed-encrypted-pcm8_std.wav",
+      "mode": "seed-encrypted",
+      "sha256": "830df8a1d094679c84ea4a386c890d6ae747b6bbbe86a7e4ed037359f0d7e95d"
+    },
+    {
+      "file": "encrypted-prog.jpg",
+      "mode": "encrypted",
+      "sha256": "0c9db3fd7ab589e69bd9e488988385e60b736d11e79766bb20993a3cff1fe373"
+    },
+    {
+      "file": "seed-prog.jpg",
+      "mode": "seed",
+      "sha256": "4293f46ce3d600c9df81d72f1e25868b7f67f6fdb2fc014b6d112ba01cf21e3b"
+    },
+    {
+      "file": "seed-encrypted-prog.jpg",
+      "mode": "seed-encrypted",
+      "sha256": "e27d07445f5ef20131e18be61a9df30e2b59a10e8b882d8ab3f2a681ccab9d87"
+    },
+    {
+      "file": "encrypted-std.jpg",
+      "mode": "encrypted",
+      "sha256": "6708bb5254dfa2e191284ddf94a55791f308ac1efb64008dc82d0e01d0b38162"
+    },
+    {
+      "file": "seed-std.jpg",
+      "mode": "seed",
+      "sha256": "a89251600463606993778f3f1689d6567d2a4477f9d3ba5d8e2783aac7346c37"
+    },
+    {
+      "file": "seed-encrypted-std.jpg",
+      "mode": "seed-encrypted",
+      "sha256": "f232c6a01b3261b11c421216485f8c9cb97847195733701779a54d87dff2ecb9"
+    },
+    {
+      "file": "encrypted-win3x1_std.bmp",
+      "mode": "encrypted",
+      "sha256": "5250098460314f30353cddf5a854dcdc28f9b90db5799282032b418b1c2b8b25"
+    },
+    {
+      "file": "seed-win3x1_std.bmp",
+      "mode": "seed",
+      "sha256": "5346704695f11a7a61e8ad3279927227b2febf177f6f53a71ffcfdb9b2a47abe"
+    },
+    {
+      "file": "seed-encrypted-win3x1_std.bmp",
+      "mode": "seed-encrypted",
+      "sha256": "b4fff6c93681b7a111c5480cee7c290641f69a63af4e67a1e5ea2333356d0dfd"
+    },
+    {
+      "file": "encrypted-win3x24_std.bmp",
+      "mode": "encrypted",
+      "sha256": "9bbf01bebbcde50db5ca94c4ed2d7f5bb090e882d277faae90c2ac385e4c2022"
+    },
+    {
+      "file": "seed-win3x24_std.bmp",
+      "mode": "seed",
+      "sha256": "bf2d3d6489afc43dcdf35df416da0fae8990b044ae16203c28aa06519756c95c"
+    },
+    {
+      "file": "seed-encrypted-win3x24_std.bmp",
+      "mode": "seed-encrypted",
+      "sha256": "c97a50a6cef2536297ea36c3cfad6486998c128a3be1547beab566adc2b581e0"
+    },
+    {
+      "file": "encrypted-win3x4_std.bmp",
+      "mode": "encrypted",
+      "sha256": "329733070f235ae2c4d87010e0efd7885be22e8bef488562398e18964260b7fb"
+    },
+    {
+      "file": "seed-win3x4_std.bmp",
+      "mode": "seed",
+      "sha256": "7c61abc4de4f3da4d5f2511446cc9aac1adae65e0555e4d13ff6c6672a193cf2"
+    },
+    {
+      "file": "seed-encrypted-win3x4_std.bmp",
+      "mode": "seed-encrypted",
+      "sha256": "82e7222a8aa06de1671f6fabb2d057bea8609e514d7e9467b0d2f2d425db1404"
+    },
+    {
+      "file": "encrypted-win3x8_std.bmp",
+      "mode": "encrypted",
+      "sha256": "fd7cbaff9ad19e9b98d65800faf0e52c944aa33e3a01ac69fd6db54a7e2e22cb"
+    },
+    {
+      "file": "seed-win3x8_std.bmp",
+      "mode": "seed",
+      "sha256": "53a2ac6861c861c211807aedac3663a734a8d6214d61e19ccfa3ea51e7a8f6d6"
+    },
+    {
+      "file": "seed-encrypted-win3x8_std.bmp",
+      "mode": "seed-encrypted",
+      "sha256": "efe3d886dfb56e3d27cbae19463d6d9e6d26c9a294464ff3fc618aa8df1b950d"
+    }
+  ]
+}
